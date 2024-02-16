@@ -80,6 +80,20 @@ class Omada:
 		Device    = 2
 		Client    = 3
 
+	SiteKnownClientsFields = (
+		'name',      # String
+		'mac',       # String
+		'wireless',  # Boolean (Not in UI)
+		'guest',     # Boolean (Guest/User)
+		'download',  # Integer (Bytes)
+		'upload',    # Integer (Bytes)
+		'duration',  # Integer (Seconds)
+		'lastSeen',  # Integer (miliseconds since 1970-01-01 00:00:00)
+		'block',     # Boolean (if Blocked)
+		'manager',   # Boolean (if it is the client that is accessing the controller)
+		'lockToAp'   # Boolean (if it is locked to an AP)
+	)
+
 	##
 	## Initialize a new Omada API instance.
 	##
@@ -434,6 +448,21 @@ class Omada:
 	##
 	def getSiteClients(self, site=None):
 		return self.__geterator( f'/sites/{self.__findKey(site)}/clients', params={'filters.active':'true'} )
+
+	##
+	## Returns the list of known clients for given site.
+	##
+	# Filters: wireless=true/false(Wired), guest=true/false(User), block/rateLimit=true, timeStart,timeEnd=EPOCH(ms)
+	# ParamsDict: sorts.<FIELD>=asc/desc, searchKey=<STRING>, filters.<FILTER>=<VALUE>
+	def getSiteKnownClients(self, site=None, sort_by='lastSeen', sort_type='desc', filters=None, search=""):
+		params = {}
+		if sort_by and sort_type:
+			params[f'sorts.{sort_by}'] = sort_type
+		if filters is not None:
+			params.update({f'filters.{k}': v for k, v in filters.items()})
+		if search:
+			params['searchKey'] = search
+		return self.__geterator( f'/sites/{self.__findKey(site)}/insight/clients', params=params )
 
 	##
 	## Returns the list of alerts for given site.
